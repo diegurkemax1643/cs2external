@@ -69,7 +69,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
@@ -93,7 +93,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
@@ -190,6 +190,7 @@
     <ClInclude Include="src\utilities\InputHandler.h" />
     <ClInclude Include="src\utilities\MapParser.h" />
     <ClInclude Include="src\utilities\Math.h" />
+    <ClInclude Include="src\utilities\OffsetUpdater.h" />
     <ClInclude Include="src\utilities\RayTrace.h" />
     <ClInclude Include="src\utilities\Utilities.h" />
     <ClInclude Include="src\valve\Entity.h" />
@@ -216,6 +217,7 @@
     <ClCompile Include="src\memory\datatypes\Vector.cpp" />
     <ClCompile Include="src\utilities\Draw.cpp" />
     <ClCompile Include="src\utilities\Math.cpp" />
+    <ClCompile Include="src\utilities\OffsetUpdater.cpp" />
     <ClCompile Include="src\utilities\Utilities.cpp" />
     <ClCompile Include="src\valve\Entity.cpp" />
     <ClCompile Include="src\valve\SchemaSystem.cpp" />

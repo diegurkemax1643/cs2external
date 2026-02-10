@@ -284,6 +284,26 @@ void Draw::AddDrawListText(ImDrawList* pDrawList, const ImFont* pFont, float flF
 bool Draw::WorldToScreen(const Vector& vecOrigin, ImVec2& vecScreen)
 {
 	const ViewMatrix_t& matWorldToScreen = g_Globals.m_matViewMatrix;
+	
+	// Validate view matrix - check if it's initialized (not all zeros)
+	// The view matrix should have non-zero values in most positions
+	bool bMatrixValid = false;
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			if (std::abs(matWorldToScreen[i][j]) > 0.0001f)
+			{
+				bMatrixValid = true;
+				break;
+			}
+		}
+		if (bMatrixValid) break;
+	}
+	
+	if (!bMatrixValid)
+		return false;
+	
 	const float flWidth = matWorldToScreen[3][0] * vecOrigin.x + matWorldToScreen[3][1] * vecOrigin.y + matWorldToScreen[3][2] * vecOrigin.z + matWorldToScreen[3][3];
 
 	if (flWidth < 0.001f)

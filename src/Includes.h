@@ -96,6 +96,7 @@
 // renderer
 #include "utilities/Draw.h"
 #include "utilities/Utilities.h"
+#include "utilities/OffsetUpdater.h"
 
 #include "gui/Gui.h"
 #include "gui/Fonts.h"
@@ -103,5 +104,6 @@
 
 #include "features/entities/EntityList.h"
 #include "features/Aimbot.h"
+#include "utilities/Logger.h"
 
 #define WIN32_LEAN_AND_MEAN

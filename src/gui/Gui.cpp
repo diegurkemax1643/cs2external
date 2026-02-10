@@ -268,7 +268,7 @@ static void RenderAimbotPanel()
         
         // Vis Check
         bool visCheck = CONFIG_GET(bool, g_Variables.m_AimBot.m_bAimbotVisibilityCheck);
-        if (ImGui::Checkbox("Vis Check [bSpotted]", &visCheck))
+        if (ImGui::Checkbox("Vis Check [bSpotted] (soon)", &visCheck))
         {
             CONFIG_GET(bool, g_Variables.m_AimBot.m_bAimbotVisibilityCheck) = visCheck;
         }
@@ -284,14 +284,18 @@ static void RenderAimbotPanel()
         
         ImGui::Spacing();
         
-        // Hitbox dropdown
-        ImGui::Text("Hitbox");
+        // Head Aim Offset (to aim slightly lower/higher on head)
+        ImGui::Text("Head Aim Offset");
         ImGui::SameLine();
-        const char* boneOptions[] = { "Head", "Neck", "Chest", "Stomach", "Pelvis" };
-        int boneIndex = CONFIG_GET(int, g_Variables.m_AimBot.m_iAimbotBoneIndex);
-        if (ImGui::Combo("##Hitbox", &boneIndex, boneOptions, IM_ARRAYSIZE(boneOptions)))
+        ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered())
         {
-            CONFIG_GET(int, g_Variables.m_AimBot.m_iAimbotBoneIndex) = boneIndex;
+            ImGui::SetTooltip("Vertical offset to aim lower/higher on head.\nNegative values = aim lower\nPositive values = aim higher\nStill aims at head bone, just adjusts vertical position.");
+        }
+        float headOffset = CONFIG_GET(float, g_Variables.m_AimBot.m_flHeadAimOffset);
+        if (ImGui::SliderFloat("##HeadOffset", &headOffset, -20.0f, 10.0f, "%.1f units"))
+        {
+            CONFIG_GET(float, g_Variables.m_AimBot.m_flHeadAimOffset) = headOffset;
         }
         
         ImGui::Spacing();
@@ -482,10 +486,10 @@ static void RenderESPPreview(ImDrawList* drawList, ImVec2 previewPos, ImVec2 pre
         }
     }
     
-    // Draw Head Circle
+    // Draw Head Circle (fixed small size, doesn't scale with distance)
     if (CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHeadCircleEnabled))
     {
-        float flHeadRadius = 15.0f;
+        float flHeadRadius = 8.0f; // Small fixed size
         drawList->AddCircle(boxHead, flHeadRadius, colBox.GetU32(), 32, flThickness);
     }
     
@@ -579,6 +583,15 @@ static void RenderVisualsPanel()
     ImGui::SameLine(0, 8);
     if (ImGui::Button("Colors", ImVec2(120, 36)))
         Gui::m_iVisualsSubTab = 1;
+    ImGui::SameLine(0, 8);
+        if (ImGui::Button("Glow", ImVec2(120, 36)))
+            Gui::m_iVisualsSubTab = 2;
+        ImGui::SameLine(0, 8);
+        if (ImGui::Button("Skeleton Test", ImVec2(120, 36)))
+            Gui::m_iVisualsSubTab = 3;
+        ImGui::SameLine(0, 8);
+        if (ImGui::Button("Fun ESP", ImVec2(120, 36)))
+            Gui::m_iVisualsSubTab = 4;
     
     ImGui::Spacing();
     ImGui::Spacing();
@@ -617,9 +630,9 @@ static void RenderVisualsPanel()
         
         ImGui::Spacing();
         
-        // ESP toggles
+        // Main ESP Toggle
         bool espEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bEnableVisuals);
-        if (ImGui::Checkbox("Enable", &espEnabled))
+        if (ImGui::Checkbox("Enable ESP", &espEnabled))
         {
             CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bEnableVisuals) = espEnabled;
         }
@@ -630,79 +643,295 @@ static void RenderVisualsPanel()
             CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bShowTeammates) = showTeammates;
         }
         
-        bool nameEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bNameEnabled);
-        if (ImGui::Checkbox("Name", &nameEnabled))
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        // Box ESP Settings
+        if (ImGui::CollapsingHeader("Box ESP"))
         {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bNameEnabled) = nameEnabled;
+            bool boxEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxEspEnabled);
+            if (ImGui::Checkbox("Enable Box", &boxEnabled))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxEspEnabled) = boxEnabled;
+            }
+            
+            bool corneredBox = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bCorneredBoxEnabled);
+            if (ImGui::Checkbox("Cornered Box", &corneredBox))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bCorneredBoxEnabled) = corneredBox;
+            }
+            
+            bool boxFill = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxFillEnabled);
+            if (ImGui::Checkbox("Box Fill", &boxFill))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxFillEnabled) = boxFill;
+            }
+            
+            bool kirkEspEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bKirkEspEnabled);
+            if (ImGui::Checkbox("Kirk ESP", &kirkEspEnabled))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bKirkEspEnabled) = kirkEspEnabled;
+            }
         }
         
-        bool boxEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxEspEnabled);
-        if (ImGui::Checkbox("Box", &boxEnabled))
+        ImGui::Spacing();
+        
+        // Health Bar Settings
+        if (ImGui::CollapsingHeader("Health Bar"))
         {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxEspEnabled) = boxEnabled;
+            bool healthBar = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHealthBarEnabled);
+            if (ImGui::Checkbox("Enable Health Bar", &healthBar))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHealthBarEnabled) = healthBar;
+            }
+            
+            bool overrideHealthColor = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bOverrideHealthColorEnabled);
+            if (ImGui::Checkbox("Override Health Color", &overrideHealthColor))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bOverrideHealthColorEnabled) = overrideHealthColor;
+            }
         }
         
-        bool kirkEspEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bKirkEspEnabled);
-        if (ImGui::Checkbox("Kirk ESP", &kirkEspEnabled))
+        ImGui::Spacing();
+        
+        // Other ESP Features
+        if (ImGui::CollapsingHeader("Other ESP Features"))
         {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bKirkEspEnabled) = kirkEspEnabled;
+            bool glowOutlineEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGlowOutlineEsp);
+            if (ImGui::Checkbox("Glow Outline ESP", &glowOutlineEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGlowOutlineEsp) = glowOutlineEsp;
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("(?)");
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("Draws player outlines using glow colors (similar to glow effect but as ESP lines)");
+            }
+            
+            ImGui::Spacing();
+            
+            bool nameEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bNameEnabled);
+            if (ImGui::Checkbox("Name", &nameEnabled))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bNameEnabled) = nameEnabled;
+            }
+            
+            bool flashedEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bFlashedEspEnabled);
+            if (ImGui::Checkbox("Flashed", &flashedEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bFlashedEspEnabled) = flashedEsp;
+            }
+            ImGui::TextDisabled("Shows 'flashed' text under enemy's feet when they are flashed");
+            
+            bool distanceEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bDistanceEspEnabled);
+            if (ImGui::Checkbox("Distance", &distanceEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bDistanceEspEnabled) = distanceEsp;
+            }
+            
+            bool weaponEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bWeaponEspEnabled);
+            if (ImGui::Checkbox("Weapon", &weaponEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bWeaponEspEnabled) = weaponEsp;
+            }
+            
+            bool visibilityIndicator = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bVisibilityIndicatorEnabled);
+            if (ImGui::Checkbox("Visibility Indicator", &visibilityIndicator))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bVisibilityIndicatorEnabled) = visibilityIndicator;
+            }
+            ImGui::TextDisabled("Changes ESP color based on visibility (green=visible, orange=hidden)");
+            
+            bool angleLines = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bAngleLinesEnabled);
+            if (ImGui::Checkbox("Angle Lines", &angleLines))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bAngleLinesEnabled) = angleLines;
+            }
+            ImGui::TextDisabled("Shows direction player is looking");
+            
+            bool grenadeEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGrenadeEspEnabled);
+            if (ImGui::Checkbox("Grenade ESP", &grenadeEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGrenadeEspEnabled) = grenadeEsp;
+            }
+            ImGui::TextDisabled("Shows boxes around thrown grenades");
+            
+            bool skeleton = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bSkeletonEspEnabled);
+            if (ImGui::Checkbox("Skeleton", &skeleton))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bSkeletonEspEnabled) = skeleton;
+            }
+            
+            bool headCircle = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHeadCircleEnabled);
+            if (ImGui::Checkbox("Head Circle", &headCircle))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHeadCircleEnabled) = headCircle;
+            }
+            
+            bool linesEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bLinesEspEnabled);
+            if (ImGui::Checkbox("Lines ESP", &linesEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bLinesEspEnabled) = linesEsp;
+            }
+            
+            bool bodyFilledEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBodyFilledEsp);
+            if (ImGui::Checkbox("Body Filled ESP", &bodyFilledEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBodyFilledEsp) = bodyFilledEsp;
+            }
+            ImGui::TextDisabled("Fills the entire body with ESP color (works with glow outline)");
+            
+            bool chamsEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bChamsEspEnabled);
+            if (ImGui::Checkbox("Chams ESP", &chamsEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bChamsEspEnabled) = chamsEsp;
+            }
+            ImGui::TextDisabled("Filled player boxes visible through walls (wallhack effect)");
+            
+            if (chamsEsp)
+            {
+                ImGui::Indent();
+                
+                bool chamsOnlyWalls = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bChamsOnlyThroughWalls);
+                if (ImGui::Checkbox("Only Through Walls", &chamsOnlyWalls))
+                {
+                    CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bChamsOnlyThroughWalls) = chamsOnlyWalls;
+                }
+                ImGui::TextDisabled("Only show chams when player is behind walls");
+                
+                float chamsOpacity = CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flChamsOpacity);
+                if (ImGui::SliderFloat("Chams Opacity", &chamsOpacity, 0.0f, 1.0f, "%.2f"))
+                {
+                    CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flChamsOpacity) = chamsOpacity;
+                }
+                
+                ImGui::Unindent();
+            }
+            
+            ImGui::Spacing();
+            
+            bool bombEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBombEspEnabled);
+            if (ImGui::Checkbox("Bomb ESP", &bombEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBombEspEnabled) = bombEsp;
+            }
+            ImGui::TextDisabled("Shows a box around the bomb");
+            
+            if (bombEsp)
+            {
+                ImGui::Indent();
+                bool showPlanted = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBombEspShowPlanted);
+                if (ImGui::Checkbox("Show Planted Bomb", &showPlanted))
+                {
+                    CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBombEspShowPlanted) = showPlanted;
+                }
+                
+                bool showDropped = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBombEspShowDropped);
+                if (ImGui::Checkbox("Show Dropped Bomb", &showDropped))
+                {
+                    CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBombEspShowDropped) = showDropped;
+                }
+                ImGui::Unindent();
+            }
         }
         
-        bool corneredBox = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bCorneredBoxEnabled);
-        if (ImGui::Checkbox("Cornered Box", &corneredBox))
+        // Minimap/Radar ESP
+        if (ImGui::CollapsingHeader("Radar/Minimap ESP"))
         {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bCorneredBoxEnabled) = corneredBox;
-        }
-        
-        bool boxFill = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxFillEnabled);
-        if (ImGui::Checkbox("Box Fill", &boxFill))
-        {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bBoxFillEnabled) = boxFill;
-        }
-        
-        bool healthBar = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHealthBarEnabled);
-        if (ImGui::Checkbox("Health", &healthBar))
-        {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHealthBarEnabled) = healthBar;
-        }
-        
-        bool overrideHealthColor = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bOverrideHealthColorEnabled);
-        if (ImGui::Checkbox("Override Health Color", &overrideHealthColor))
-        {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bOverrideHealthColorEnabled) = overrideHealthColor;
-        }
-        
-        bool skeleton = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bSkeletonEspEnabled);
-        if (ImGui::Checkbox("Skeleton", &skeleton))
-        {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bSkeletonEspEnabled) = skeleton;
-        }
-        
-        bool headCircle = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHeadCircleEnabled);
-        if (ImGui::Checkbox("Head Circle", &headCircle))
-        {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bHeadCircleEnabled) = headCircle;
-        }
-        
-        bool linesEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bLinesEspEnabled);
-        if (ImGui::Checkbox("Lines ESP", &linesEsp))
-        {
-            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bLinesEspEnabled) = linesEsp;
-        }
-        
-        bool minimapEsp = CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapEspEnabled);
-        if (ImGui::Checkbox("Minimap ESP", &minimapEsp))
-        {
-            CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapEspEnabled) = minimapEsp;
-        }
-        
-        ImGui::SameLine();
-        if (ImGui::SmallButton("?"))
-        {
-            // Show minimap settings dialog (would need to implement)
+            bool minimapEsp = CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapEspEnabled);
+            if (ImGui::Checkbox("Enable Radar", &minimapEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapEspEnabled) = minimapEsp;
+            }
+            ImGui::TextDisabled("Shows player positions on a 2D radar");
+            
+            if (minimapEsp)
+            {
+                ImGui::Spacing();
+                ImGui::Text("Radar Settings:");
+                
+                int radarSize = CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapSize);
+                if (ImGui::SliderInt("Size", &radarSize, 100, 500))
+                {
+                    CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapSize) = std::clamp(radarSize, 100, 500);
+                }
+                
+                int radarRange = CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapRange);
+                if (ImGui::SliderInt("Range", &radarRange, 500, 5000))
+                {
+                    CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapRange) = std::clamp(radarRange, 500, 5000);
+                }
+                
+                ImGui::Spacing();
+                ImGui::Text("Position:");
+                int radarX = CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapX);
+                int radarY = CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapY);
+                if (ImGui::InputInt("X##RadarX", &radarX))
+                {
+                    CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapX) = std::max(0, radarX);
+                }
+                ImGui::SameLine();
+                if (ImGui::InputInt("Y##RadarY", &radarY))
+                {
+                    CONFIG_GET(int, g_Variables.m_MinimapEsp.m_iMinimapY) = std::max(0, radarY);
+                }
+                
+                ImGui::Spacing();
+                ImGui::Text("Colors:");
+                
+                Color colEnemy = CONFIG_GET(Color, g_Variables.m_MinimapEsp.m_colMinimapEnemy);
+                float colEnemyF[4] = { colEnemy.r() / 255.0f, colEnemy.g() / 255.0f, colEnemy.b() / 255.0f, colEnemy.a() / 255.0f };
+                if (ImGui::ColorEdit4("Enemy Color##Radar", colEnemyF))
+                {
+                    colEnemy.Set(
+                        static_cast<uint8_t>(colEnemyF[0] * 255.0f),
+                        static_cast<uint8_t>(colEnemyF[1] * 255.0f),
+                        static_cast<uint8_t>(colEnemyF[2] * 255.0f),
+                        static_cast<uint8_t>(colEnemyF[3] * 255.0f)
+                    );
+                    CONFIG_GET(Color, g_Variables.m_MinimapEsp.m_colMinimapEnemy) = colEnemy;
+                }
+                
+                Color colTeam = CONFIG_GET(Color, g_Variables.m_MinimapEsp.m_colMinimapTeam);
+                float colTeamF[4] = { colTeam.r() / 255.0f, colTeam.g() / 255.0f, colTeam.b() / 255.0f, colTeam.a() / 255.0f };
+                if (ImGui::ColorEdit4("Team Color##Radar", colTeamF))
+                {
+                    colTeam.Set(
+                        static_cast<uint8_t>(colTeamF[0] * 255.0f),
+                        static_cast<uint8_t>(colTeamF[1] * 255.0f),
+                        static_cast<uint8_t>(colTeamF[2] * 255.0f),
+                        static_cast<uint8_t>(colTeamF[3] * 255.0f)
+                    );
+                    CONFIG_GET(Color, g_Variables.m_MinimapEsp.m_colMinimapTeam) = colTeam;
+                }
+                
+                ImGui::Spacing();
+                bool showDirection = CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapShowPlayerDirection);
+                if (ImGui::Checkbox("Show Direction Indicator", &showDirection))
+                {
+                    CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapShowPlayerDirection) = showDirection;
+                }
+                
+                ImGui::Spacing();
+                bool rotateWithView = CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapRotateWithView);
+                if (ImGui::Checkbox("Rotate With View", &rotateWithView))
+                {
+                    CONFIG_GET(bool, g_Variables.m_MinimapEsp.m_bMinimapRotateWithView) = rotateWithView;
+                }
+                ImGui::TextDisabled("If enabled, radar rotates with your view angle. If disabled, radar is locked to north.");
+                
+                float rotationAdjust = CONFIG_GET(float, g_Variables.m_MinimapEsp.m_flMinimapRotationAdjustment);
+                if (ImGui::SliderFloat("Rotation Adjustment", &rotationAdjust, -180.0f, 180.0f))
+                {
+                    CONFIG_GET(float, g_Variables.m_MinimapEsp.m_flMinimapRotationAdjustment) = rotationAdjust;
+                }
+                ImGui::TextDisabled("Fine-tune rotation offset (useful if radar rotation is slightly off)");
+            }
         }
     }
-    else
+    else if (Gui::m_iVisualsSubTab == 1)
     {
         ImGui::Text("ESP Colors");
         ImGui::Spacing();
@@ -779,6 +1008,288 @@ static void RenderVisualsPanel()
         {
             CONFIG_GET(int, g_Variables.m_PlayerVisuals.m_iLinesEspOrigin) = linesOrigin;
         }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        // Chicken ESP Color
+        ImGui::Text("Chicken ESP Color");
+        Color chickenColor = CONFIG_GET(Color, g_Variables.m_FunEsp.m_colChickenEsp);
+        float chickenCol[3] = { chickenColor.rBase(), chickenColor.gBase(), chickenColor.bBase() };
+        if (ImGui::ColorEdit3("##ChickenColor", chickenCol))
+        {
+            chickenColor.Set(chickenCol[0], chickenCol[1], chickenCol[2], 1.0f);
+            CONFIG_GET(Color, g_Variables.m_FunEsp.m_colChickenEsp) = chickenColor;
+        }
+        
+        ImGui::Spacing();
+        
+        // Bomb ESP Color
+        ImGui::Text("Bomb ESP Color");
+        Color bombColor = CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colBombEsp);
+        float bombCol[3] = { bombColor.rBase(), bombColor.gBase(), bombColor.bBase() };
+        if (ImGui::ColorEdit3("##BombColor", bombCol))
+        {
+            bombColor.Set(bombCol[0], bombCol[1], bombCol[2], 1.0f);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colBombEsp) = bombColor;
+        }
+        
+        ImGui::Spacing();
+        
+        // Visibility Indicator Colors
+        ImGui::Text("Visibility Indicator Colors");
+        ImGui::Text("Visible Enemy Color");
+        Color visibleColor = CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colVisibleEnemy);
+        float visibleCol[3] = { visibleColor.rBase(), visibleColor.gBase(), visibleColor.bBase() };
+        if (ImGui::ColorEdit3("##VisibleColor", visibleCol))
+        {
+            visibleColor.Set(visibleCol[0], visibleCol[1], visibleCol[2], 1.0f);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colVisibleEnemy) = visibleColor;
+        }
+        
+        ImGui::Text("Hidden Enemy Color");
+        Color hiddenColor = CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colHiddenEnemy);
+        float hiddenCol[3] = { hiddenColor.rBase(), hiddenColor.gBase(), hiddenColor.bBase() };
+        if (ImGui::ColorEdit3("##HiddenColor", hiddenCol))
+        {
+            hiddenColor.Set(hiddenCol[0], hiddenCol[1], hiddenCol[2], 1.0f);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colHiddenEnemy) = hiddenColor;
+        }
+        
+        ImGui::Spacing();
+        
+        // Chams ESP Colors
+        ImGui::Text("Chams ESP Colors");
+        ImGui::Text("Chams Visible Color");
+        Color chamsVisibleColor = CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colChamsVisible);
+        float chamsVisibleCol[4] = { chamsVisibleColor.rBase(), chamsVisibleColor.gBase(), chamsVisibleColor.bBase(), chamsVisibleColor.aBase() };
+        if (ImGui::ColorEdit4("##ChamsVisibleColor", chamsVisibleCol))
+        {
+            chamsVisibleColor.Set(chamsVisibleCol[0], chamsVisibleCol[1], chamsVisibleCol[2], chamsVisibleCol[3]);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colChamsVisible) = chamsVisibleColor;
+        }
+        
+        ImGui::Text("Chams Hidden Color");
+        Color chamsHiddenColor = CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colChamsHidden);
+        float chamsHiddenCol[4] = { chamsHiddenColor.rBase(), chamsHiddenColor.gBase(), chamsHiddenColor.bBase(), chamsHiddenColor.aBase() };
+        if (ImGui::ColorEdit4("##ChamsHiddenColor", chamsHiddenCol))
+        {
+            chamsHiddenColor.Set(chamsHiddenCol[0], chamsHiddenCol[1], chamsHiddenCol[2], chamsHiddenCol[3]);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colChamsHidden) = chamsHiddenColor;
+        }
+        
+        ImGui::Spacing();
+        
+        // Grenade ESP Color
+        ImGui::Text("Grenade ESP Color");
+        Color grenadeColor = CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGrenadeEsp);
+        float grenadeCol[3] = { grenadeColor.rBase(), grenadeColor.gBase(), grenadeColor.bBase() };
+        if (ImGui::ColorEdit3("##GrenadeColor", grenadeCol))
+        {
+            grenadeColor.Set(grenadeCol[0], grenadeCol[1], grenadeCol[2], 1.0f);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGrenadeEsp) = grenadeColor;
+        }
+    }
+    else if (Gui::m_iVisualsSubTab == 2)
+    {
+        ImGui::Text("Glow ESP Settings");
+        ImGui::Spacing();
+        
+        bool glowEsp = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGlowEspEnabled);
+        if (ImGui::Checkbox("Enable Glow ESP", &glowEsp))
+        {
+            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGlowEspEnabled) = glowEsp;
+        }
+        
+        ImGui::Spacing();
+        
+        // Filled Body Glow
+        bool glowFilled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGlowFilled);
+        if (ImGui::Checkbox("Filled Body Glow", &glowFilled))
+        {
+            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bGlowFilled) = glowFilled;
+        }
+        ImGui::TextDisabled("Fills the entire body with glow color instead of just the outline");
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        // Glow Intensity slider (0 - 100, like C# project)
+        float glowIntensity = CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flGlowIntensity);
+        if (ImGui::SliderFloat("Glow Intensity", &glowIntensity, 0.0f, 100.0f, "%.1f"))
+        {
+            CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flGlowIntensity) = glowIntensity;
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        // Color Presets
+        ImGui::Text("Color Presets");
+        ImGui::TextDisabled("Click on a color block to apply preset settings");
+        ImGui::Spacing();
+        
+        // Preset 1: Grün (Green)
+        ImVec2 buttonSize = ImVec2(60.0f, 30.0f);
+        ImU32 colGreen = IM_COL32(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Button, colGreen);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(0, 200, 0, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(0, 150, 0, 255));
+        if (ImGui::Button("Grün", buttonSize))
+        {
+            // Preset: Enemy = Lila (60, 0, 119), Team = Grün (0, 255, 0), Intensity = 80
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowEnemy) = Color(60, 0, 119, 255);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowTeam) = Color(0, 255, 0, 255);
+            CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flGlowIntensity) = 80.0f;
+        }
+        ImGui::PopStyleColor(3);
+        
+        ImGui::SameLine();
+        
+        // Preset 2: Pink
+        ImU32 colPink = IM_COL32(255, 20, 147, 255);
+        ImGui::PushStyleColor(ImGuiCol_Button, colPink);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 50, 170, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(200, 0, 100, 255));
+        if (ImGui::Button("Pink", buttonSize))
+        {
+            // Preset: Enemy = Pink/Magenta (72, 0, 119), Team = Grün (0, 255, 0), Intensity = 80
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowEnemy) = Color(72, 0, 119, 255);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowTeam) = Color(0, 255, 0, 255);
+            CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flGlowIntensity) = 80.0f;
+        }
+        ImGui::PopStyleColor(3);
+        
+        ImGui::SameLine();
+        
+        // Preset 3: Blau (Blue)
+        ImU32 colBlue = IM_COL32(0, 100, 255, 255);
+        ImGui::PushStyleColor(ImGuiCol_Button, colBlue);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(0, 130, 255, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(0, 70, 200, 255));
+        if (ImGui::Button("Blau", buttonSize))
+        {
+            // Preset: Enemy = Blau (80, 0, 119), Team = Grün (0, 255, 0), Intensity = 80
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowEnemy) = Color(80, 0, 119, 255);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowTeam) = Color(0, 255, 0, 255);
+            CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flGlowIntensity) = 80.0f;
+        }
+        ImGui::PopStyleColor(3);
+        
+        ImGui::SameLine();
+        
+        // Preset 4: Gelb (Yellow)
+        ImU32 colYellow = IM_COL32(255, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Button, colYellow);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 50, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(200, 200, 0, 255));
+        if (ImGui::Button("Gelb", buttonSize))
+        {
+            // Preset: Enemy = Gelb/Magenta (118, 0, 119), Team = Grün (0, 255, 0), Intensity = 80
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowEnemy) = Color(118, 0, 119, 255);
+            CONFIG_GET(Color, g_Variables.m_PlayerVisuals.m_colGlowTeam) = Color(0, 255, 0, 255);
+            CONFIG_GET(float, g_Variables.m_PlayerVisuals.m_flGlowIntensity) = 80.0f;
+        }
+        ImGui::PopStyleColor(3);
+        
+        ImGui::Spacing();
+        ImGui::TextDisabled("Note: Glow colors may be limited by game's team-based glow system");
+    }
+    else if (Gui::m_iVisualsSubTab == 3) // Skeleton Test Tab
+    {
+        ImGui::Text("Skeleton ESP Test Methods");
+        ImGui::Spacing();
+        ImGui::TextDisabled("Test different methods to read bone positions. Change method and see results in real-time.");
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        int iTestMethod = CONFIG_GET(int, g_Variables.m_PlayerVisuals.m_iSkeletonTestMethod);
+        const char* methodNames[] = {
+            "Method 0: Vector at 0x20 offset",
+            "Method 1: BoneData_t structure at 0x20 offset",
+            "Method 2: Vector at 0x30 offset",
+            "Method 3: Vector at 0x40 offset",
+            "Method 4: BoneData_t at 0x30 offset",
+            "Method 5: BoneData_t at 0x40 offset",
+            "Method 6: Matrix3x4 position (0x20 offset)",
+            "Method 7: Matrix3x4 position (0x30 offset)",
+            "Method 8: Vector at 0x48 offset",
+            "Method 9: Vector at 0x50 offset",
+            "Method 10: Bone Cache from 0x480 offset",
+            "Method 11: Auto-detect stride with Matrix3x4 (RECOMMENDED - FIXED)"
+        };
+        
+        if (ImGui::Combo("Test Method", &iTestMethod, methodNames, IM_ARRAYSIZE(methodNames)))
+        {
+            CONFIG_GET(int, g_Variables.m_PlayerVisuals.m_iSkeletonTestMethod) = iTestMethod;
+        }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        ImGui::Text("Instructions:");
+        ImGui::BulletText("Enable Skeleton ESP in General tab");
+        ImGui::BulletText("Select a test method above");
+        ImGui::BulletText("Check if bones are visible in-game");
+        ImGui::BulletText("Try different methods until one works");
+        ImGui::Spacing();
+        ImGui::TextDisabled("Note: This is a temporary testing feature. Once a working method is found, it will be integrated into the main skeleton ESP.");
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        // Diagnostic Options
+        ImGui::Text("Advanced Bone Debugging");
+        ImGui::Spacing();
+        
+        bool diagnosticEnabled = CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bSkeletonDiagnosticEnabled);
+        if (ImGui::Checkbox("Enable Automatic Diagnosis", &diagnosticEnabled))
+        {
+            CONFIG_GET(bool, g_Variables.m_PlayerVisuals.m_bSkeletonDiagnosticEnabled) = diagnosticEnabled;
+        }
+        ImGui::TextDisabled("Automatically scans all possible bone cache offsets and logs working combinations");
+        ImGui::Spacing();
+        
+        ImGui::Text("Fallback Methods:");
+        ImGui::BulletText("Method 11 automatically tries multiple strides (0x30, 0x20, 0x40, 0x48, 0x50)");
+        ImGui::BulletText("If bones fail, system falls back to ModelState method");
+        ImGui::BulletText("If ModelState fails, uses hitbox approximation");
+        ImGui::Spacing();
+        ImGui::TextDisabled("Check logs for detailed bone reading information");
+    }
+    else if (Gui::m_iVisualsSubTab == 4) // Fun ESP Tab
+    {
+        ImGui::Text("Fun ESP Settings");
+        ImGui::Spacing();
+        
+        // Chicken ESP Section
+        if (ImGui::CollapsingHeader("Chicken ESP"))
+        {
+            bool chickenEsp = CONFIG_GET(bool, g_Variables.m_FunEsp.m_bChickenEspEnabled);
+            if (ImGui::Checkbox("Enable Chicken ESP", &chickenEsp))
+            {
+                CONFIG_GET(bool, g_Variables.m_FunEsp.m_bChickenEspEnabled) = chickenEsp;
+            }
+            ImGui::TextDisabled("Draw boxes around chickens on the map");
+            ImGui::Spacing();
+            
+            // Chicken ESP Thickness
+            ImGui::Text("Chicken ESP Thickness");
+            int thickness = CONFIG_GET(int, g_Variables.m_FunEsp.m_iChickenEspThickness);
+            if (ImGui::SliderInt("##ChickenThickness", &thickness, 1, 5))
+            {
+                CONFIG_GET(int, g_Variables.m_FunEsp.m_iChickenEspThickness) = thickness;
+            }
+            ImGui::TextDisabled("Adjust line thickness for chicken ESP boxes");
+            ImGui::Spacing();
+            ImGui::TextDisabled("Note: Chicken ESP color can be changed in the Colors tab");
+        }
     }
 }
 
@@ -832,6 +1343,65 @@ static void RenderMiscellaneousPanel()
             ImGui::EndTabItem();
         }
         
+        // Logs Tab
+        if (ImGui::BeginTabItem("Logs"))
+        {
+            ImGui::Text("Debug Logs");
+            ImGui::TextDisabled("View aimbot and system debug messages");
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // Clear button
+            if (ImGui::Button("Clear Logs", ImVec2(100, 25)))
+            {
+                Logger::Clear();
+            }
+            ImGui::SameLine();
+            
+            // Copy button
+            if (ImGui::Button("Copy All", ImVec2(100, 25)))
+            {
+                auto vecLogs = Logger::GetLogs();
+                std::string strAllLogs;
+                for (const auto& log : vecLogs)
+                {
+                    strAllLogs += "[" + log.m_strTimestamp + "] " + log.m_strMessage + "\n";
+                }
+                
+                // Copy to clipboard
+                ImGui::SetClipboardText(strAllLogs.c_str());
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("Clear all log entries | Copy logs to clipboard");
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // Log display area
+            ImGui::BeginChild("LogScrollArea", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 10), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+            auto vecLogs = Logger::GetLogs();
+            for (const auto& log : vecLogs)
+            {
+                // Display timestamp and message
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "[%s]", log.m_strTimestamp.c_str());
+                ImGui::SameLine();
+                ImGui::TextWrapped("%s", log.m_strMessage.c_str());
+            }
+
+            // Auto-scroll to bottom if new logs are added
+            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f)
+            {
+                ImGui::SetScrollHereY(1.0f);
+            }
+
+            ImGui::EndChild();
+
+            ImGui::EndTabItem();
+        }
+
         // Widgets Tab
         if (ImGui::BeginTabItem("Widgets"))
         {
@@ -1037,6 +1607,35 @@ static void RenderMiscellaneousPanel()
                 }
             }
             
+            // Behind Enemy Indicator Widget
+            if (ImGui::CollapsingHeader("Behind Enemy Indicator Widget"))
+            {
+                bool behindEnemyWidget = CONFIG_GET(bool, g_Variables.m_Widgets.m_bBehindEnemyIndicatorWidgetEnabled);
+                if (ImGui::Checkbox("Enable Behind Enemy Indicator", &behindEnemyWidget))
+                {
+                    CONFIG_GET(bool, g_Variables.m_Widgets.m_bBehindEnemyIndicatorWidgetEnabled) = behindEnemyWidget;
+                }
+                ImGui::TextDisabled("Shows count of enemies behind you who can see you");
+                
+                if (behindEnemyWidget)
+                {
+                    ImGui::Spacing();
+                    ImGui::Text("Position:");
+                    float behindX = CONFIG_GET(float, g_Variables.m_Widgets.m_flBehindEnemyIndicatorWidgetX);
+                    float behindY = CONFIG_GET(float, g_Variables.m_Widgets.m_flBehindEnemyIndicatorWidgetY);
+                    if (ImGui::InputFloat("X##BehindX", &behindX))
+                    {
+                        CONFIG_GET(float, g_Variables.m_Widgets.m_flBehindEnemyIndicatorWidgetX) = std::max(0.0f, behindX);
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::InputFloat("Y##BehindY", &behindY))
+                    {
+                        CONFIG_GET(float, g_Variables.m_Widgets.m_flBehindEnemyIndicatorWidgetY) = std::max(0.0f, behindY);
+                    }
+                    ImGui::TextDisabled("Set X to 0 to auto-position at top-right");
+                }
+            }
+            
             ImGui::EndTabItem();
         }
         
@@ -1068,49 +1667,7 @@ static void RenderWebMenuPanel()
 {
     ImGui::SetCursorPos(ImVec2(28, 28));
     
-    ImGui::Text("Web Menu Settings");
-    ImGui::Spacing();
-    
-    if (ImGui::CollapsingHeader("Web Server"))
-    {
-        bool webServerEnabled = CONFIG_GET(bool, g_Variables.m_WebServer.m_bWebServerEnabled);
-        if (ImGui::Checkbox("Enable Web Server", &webServerEnabled))
-        {
-            CONFIG_GET(bool, g_Variables.m_WebServer.m_bWebServerEnabled) = webServerEnabled;
-        }
-        
-        ImGui::TextDisabled("Start a local web server to view enemy information in a browser");
-        ImGui::Spacing();
-        
-        // Port
-        ImGui::Text("Port");
-        float port = static_cast<float>(CONFIG_GET(int, g_Variables.m_WebServer.m_iWebServerPort));
-        if (ImGui::SliderFloat("##Port", &port, 1024.0f, 65535.0f, "%.0f"))
-        {
-            CONFIG_GET(int, g_Variables.m_WebServer.m_iWebServerPort) = static_cast<int>(port);
-        }
-        ImGui::TextDisabled("Port number for the web server (default: 8080)");
-        ImGui::Spacing();
-        
-        // Update Interval
-        ImGui::Text("Update Interval (ms)");
-        float interval = static_cast<float>(CONFIG_GET(int, g_Variables.m_WebServer.m_iWebServerUpdateInterval));
-        if (ImGui::SliderFloat("##Interval", &interval, 1.0f, 500.0f, "%.0fms"))
-        {
-            CONFIG_GET(int, g_Variables.m_WebServer.m_iWebServerUpdateInterval) = std::max(1, std::min(500, static_cast<int>(interval)));
-        }
-        ImGui::TextDisabled("How often the web page updates enemy data (default: 1000ms = 1 second)");
-        ImGui::Spacing();
-        
-        // Tunnel
-        ImGui::Text("Cloudflared Tunnel");
-        bool tunnelEnabled = CONFIG_GET(bool, g_Variables.m_WebServer.m_bWebServerTunnelEnabled);
-        if (ImGui::Checkbox("Enable Cloudflared Tunnel (Public URL without port forwarding)", &tunnelEnabled))
-        {
-            CONFIG_GET(bool, g_Variables.m_WebServer.m_bWebServerTunnelEnabled) = tunnelEnabled;
-        }
-        ImGui::TextDisabled("Creates a public URL accessible from anywhere using Cloudflare tunnel. Requires cloudflared installed.");
-    }
+    ImGui::Text("Web Menu Settings (soon)");
 }
 
 static void RenderConfigPanel()

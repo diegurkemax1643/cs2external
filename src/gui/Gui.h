@@ -190,7 +190,7 @@ namespace Gui
 	
 	// Sub-tab states
 	inline int m_iAimbotSubTab = 0; // 0 = Aim, 1 = TriggerBot
-	inline int m_iVisualsSubTab = 0; // 0 = General, 1 = Colors
+	inline int m_iVisualsSubTab = 0; // 0 = General, 1 = Colors, 2 = Glow, 3 = Skeleton Test, 4 = Fun ESP
 	inline int m_iMiscSubTab = 0; // 0 = Settings, 1 = Widgets
 	
 	// Keybind selection state

@@ -42,6 +42,7 @@ public:
 		CONFIG_ADD_VARIABLE(int, m_iAimKey, VK_LMENU); // Left Alt
 		CONFIG_ADD_VARIABLE(int, m_iAimMouseButton, VK_XBUTTON1);
 		CONFIG_ADD_VARIABLE(int, m_iAimKeyType, EAimKeyType::AIM_KEY_KEYBOARD);
+		CONFIG_ADD_VARIABLE(float, m_flHeadAimOffset, 0.0f); // Vertical offset to aim lower on head (in game units, negative = lower)
 	}; AimBotVariables_t m_AimBot;
 	
 	struct TriggerBotVariables_t
@@ -66,6 +67,13 @@ public:
 		CONFIG_ADD_VARIABLE(bool, m_bIndicatorEspEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bHealthBarEnabled, true);
 		CONFIG_ADD_VARIABLE(bool, m_bNameEnabled, true);
+		CONFIG_ADD_VARIABLE(bool, m_bFlashedEspEnabled, false); // Show "flashed" text when enemy is flashed
+		CONFIG_ADD_VARIABLE(bool, m_bDistanceEspEnabled, true);
+		CONFIG_ADD_VARIABLE(bool, m_bWeaponEspEnabled, true);
+		CONFIG_ADD_VARIABLE(bool, m_bVisibilityIndicatorEnabled, true);
+		CONFIG_ADD_VARIABLE(bool, m_bAngleLinesEnabled, false);
+		CONFIG_ADD_VARIABLE(Color, m_colVisibleEnemy, Color(0, 255, 0, 255)); // Green when visible
+		CONFIG_ADD_VARIABLE(Color, m_colHiddenEnemy, Color(255, 165, 0, 255)); // Orange when not visible
 		CONFIG_ADD_VARIABLE(bool, m_bSelfEspEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bCorneredBoxEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bBoxFillEnabled, false);
@@ -73,10 +81,34 @@ public:
 		CONFIG_ADD_VARIABLE(bool, m_bHeadCircleEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bBombInfoEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bBombLocationEnabled, false);
+		CONFIG_ADD_VARIABLE(bool, m_bBombEspEnabled, true);
+		CONFIG_ADD_VARIABLE(bool, m_bBombEspShowPlanted, true);
+		CONFIG_ADD_VARIABLE(bool, m_bBombEspShowDropped, true);
+		CONFIG_ADD_VARIABLE(Color, m_colBombEsp, Color(255, 0, 0, 255)); // Red color for bomb ESP
 		CONFIG_ADD_VARIABLE(bool, m_bDroppedWeaponsEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bDroppedGrenadesEnabled, false);
+		CONFIG_ADD_VARIABLE(bool, m_bGrenadeEspEnabled, true);
+		CONFIG_ADD_VARIABLE(Color, m_colGrenadeEsp, Color(255, 200, 0, 255)); // Orange/yellow for grenades
 		CONFIG_ADD_VARIABLE(bool, m_bForceIconsEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bEnablePreview, false);
+		CONFIG_ADD_VARIABLE(bool, m_bGlowEspEnabled, true);
+		CONFIG_ADD_VARIABLE(bool, m_bBodyFilledEsp, false); // Filled body ESP (fills entire body with color using bone outlines)
+		CONFIG_ADD_VARIABLE(bool, m_bGlowOutlineEsp, false); // Draw glow outlines as ESP (draws player outlines using glow colors)
+		
+		// Chams ESP (filled player outlines visible through walls)
+		CONFIG_ADD_VARIABLE(bool, m_bChamsEspEnabled, false); // Enable chams ESP
+		CONFIG_ADD_VARIABLE(Color, m_colChamsVisible, Color(0, 255, 0, 180)); // Green chams when visible
+		CONFIG_ADD_VARIABLE(Color, m_colChamsHidden, Color(255, 0, 0, 180)); // Red chams when hidden (through walls)
+		CONFIG_ADD_VARIABLE(bool, m_bChamsOnlyThroughWalls, false); // Only show chams when player is behind walls
+		CONFIG_ADD_VARIABLE(float, m_flChamsOpacity, 0.7f); // Chams opacity (0.0 - 1.0)
+		
+		// Glow ESP Settings
+		CONFIG_ADD_VARIABLE(Color, m_colGlowEnemy, Color(31, 0, 77, 255)); // Purple glow for enemies
+		CONFIG_ADD_VARIABLE(Color, m_colGlowTeam, Color(0, 255, 0, 255)); // Green glow for teammates
+		// Match C# style: 0-100 intensity (default ~80 for strong, visible glow)
+		CONFIG_ADD_VARIABLE(float, m_flGlowIntensity, 80.0f); // Glow intensity (0.0 - 100.0)
+		CONFIG_ADD_VARIABLE(int, m_iGlowStyle, 0); // Glow style: 0 = default, 1 = rim, 2 = full
+		CONFIG_ADD_VARIABLE(bool, m_bGlowFilled, false); // Filled body glow (entire body filled, not just outline)
 		
 		// ESP Lines
 		CONFIG_ADD_VARIABLE(bool, m_bLinesEspEnabled, false);
@@ -88,6 +120,8 @@ public:
 		CONFIG_ADD_VARIABLE(Color, m_colESPText, Color(255, 255, 255, 255)); // White text color
 		CONFIG_ADD_VARIABLE(Color, m_colSkeletonEsp, Color(80, 180, 255, 255)); // Skeleton color
 		CONFIG_ADD_VARIABLE(Color, m_colLinesEsp, Color(255, 255, 80, 255)); // Lines ESP color
+		CONFIG_ADD_VARIABLE(int, m_iSkeletonTestMethod, 11); // Skeleton test method (0-11, 11 = Auto-detect stride - RECOMMENDED)
+		CONFIG_ADD_VARIABLE(bool, m_bSkeletonDiagnosticEnabled, false); // Enable automatic bone cache diagnosis
 		
 		// ESP Gradient
 		CONFIG_ADD_VARIABLE(bool, m_bBoxGradientEnabled, false);
@@ -113,6 +147,7 @@ public:
 		CONFIG_ADD_VARIABLE(Color, m_colMinimapTeam, Color(0, 255, 0, 255)); // Green for teammates
 		CONFIG_ADD_VARIABLE(bool, m_bMinimapShowPlayerDirection, true);
 		CONFIG_ADD_VARIABLE(float, m_flMinimapRotationAdjustment, 0.0f); // Rotation adjustment in degrees
+		CONFIG_ADD_VARIABLE(bool, m_bMinimapRotateWithView, true); // If true, radar rotates with view angle; if false, locked to north
 	}; MinimapEspVariables_t m_MinimapEsp;
 
 	struct WidgetVariables_t
@@ -124,6 +159,7 @@ public:
 		CONFIG_ADD_VARIABLE(bool, m_bHealthArmorWidgetEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bWeaponAmmoWidgetEnabled, false);
 		CONFIG_ADD_VARIABLE(bool, m_bSpectatorListWidgetEnabled, false);
+		CONFIG_ADD_VARIABLE(bool, m_bBehindEnemyIndicatorWidgetEnabled, true);
 		
 		// Widget Positions
 		CONFIG_ADD_VARIABLE(float, m_flFpsWidgetX, 10.0f);
@@ -140,6 +176,8 @@ public:
 		CONFIG_ADD_VARIABLE(float, m_flWeaponAmmoWidgetY, 160.0f);
 		CONFIG_ADD_VARIABLE(float, m_flSpectatorListWidgetX, 10.0f);
 		CONFIG_ADD_VARIABLE(float, m_flSpectatorListWidgetY, 190.0f);
+		CONFIG_ADD_VARIABLE(float, m_flBehindEnemyIndicatorWidgetX, 0.0f); // Will be set to top-right by default
+		CONFIG_ADD_VARIABLE(float, m_flBehindEnemyIndicatorWidgetY, 10.0f);
 	}; WidgetVariables_t m_Widgets;
 
 	struct WebServerVariables_t
@@ -149,6 +187,13 @@ public:
 		CONFIG_ADD_VARIABLE(int, m_iWebServerUpdateInterval, 1000); // Update interval in milliseconds
 		CONFIG_ADD_VARIABLE(bool, m_bWebServerTunnelEnabled, false); // Cloudflared tunnel enabled
 	}; WebServerVariables_t m_WebServer;
+
+	struct FunEspVariables_t
+	{
+		CONFIG_ADD_VARIABLE(bool, m_bChickenEspEnabled, false);
+		CONFIG_ADD_VARIABLE(Color, m_colChickenEsp, Color(255, 200, 0, 255)); // Orange/yellow color for chickens
+		CONFIG_ADD_VARIABLE(int, m_iChickenEspThickness, 2);
+	}; FunEspVariables_t m_FunEsp;
 
 };
 inline CVariables g_Variables;

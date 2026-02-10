@@ -40,8 +40,8 @@ class CEntityIdentity;
 class CGameEntitySystem
 {
 public:
-	MEM_PAD(0x210);
-	CEntityIdentity* m_pFirst; 		//0x0010
+	MEM_PAD(0x8);
+	CEntityIdentity* m_pFirst; 		//0x0008 - Updated: Correct offset for m_pFirst
 };
 
 class CInterfaces

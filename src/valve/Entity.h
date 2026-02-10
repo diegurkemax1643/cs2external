@@ -146,7 +146,7 @@ public:
     SCHEMA(Vector, m_vecAbsOrigin, "CGameSceneNode->m_vecAbsOrigin");
     SCHEMA(CTransform, m_nodeToWorld, "CGameSceneNode->m_nodeToWorld");
 
-    OFFSET(BoneData_t*, m_pBoneCache, 0x1F0)
+    OFFSET(BoneData_t*, m_pBoneCache, 0x480) // Updated: Found valid bone data at 0x480 offset
 };
 
 class CCollisionProperty
@@ -316,10 +316,18 @@ class CCSPlayer_WeaponServices : public CPlayer_WeaponServices
 public:
 };
 
+class CPlayer_MovementServices
+{
+public:
+    SCHEMA(bool, m_bDucked, "CCSPlayer_MovementServices->m_bDucked");
+    SCHEMA(float, m_flDuckAmount, "CCSPlayer_MovementServices->m_flDuckAmount");
+};
+
 class C_BasePlayerPawn : public C_BaseModelEntity
 {
 public:
     SCHEMA(CCSPlayer_WeaponServices*, m_pWeaponServices, "C_BasePlayerPawn->m_pWeaponServices");
+    SCHEMA(CPlayer_MovementServices*, m_pMovementServices, "C_BasePlayerPawn->m_pMovementServices");
 
     SCHEMA(float, m_flFOVSensitivityAdjust, "C_BasePlayerPawn->m_flFOVSensitivityAdjust");
 };
@@ -352,6 +360,46 @@ public:
     }
 };
 
+// Studio model structures for efficient bone reading
+struct studiohdr_t
+{
+    int id; //0x0000
+    int version; //0x0004
+    long checksum; //0x0008
+    char name[64]; //0x000C
+    int length; //0x004C
+    Vector eyeposition; //0x0050
+    Vector illumposition; //0x005C
+    Vector hull_min; //0x0068
+    Vector hull_max; //0x0074
+    Vector view_bbmin; //0x0080
+    Vector view_bbmax; //0x008C
+    int flags; //0x0098
+    int numbones; //0x009C
+    int boneindex; //0x00A0 // offset to mstudiobone_t array
+};
+
+struct mstudiobone_t
+{
+    int sznameindex; //0x0000
+    int parent; //0x0004
+    int bonecontroller[6]; //0x0008
+    Vector pos; //0x0020
+    Quaternion quat; //0x002C
+    Vector rot; //0x003C
+    Vector posscale; //0x0048
+    Vector rotscale; //0x0054
+    Matrix3x4_t poseToBone; //0x0060
+    Quaternion qAlignment; //0x0090
+    int flags; //0x00A0
+    int proctype; //0x00A4
+    int physicsbone; //0x00A8
+    int surfacepropidx; //0x00AC
+    int contents; //0x00B0
+    int szhitboxindex; //0x00B4
+    int szattachindex; //0x00B8
+};
+
 class C_CSPlayerPawn : public C_CSPlayerPawnBase
 {
 public:
@@ -367,10 +415,19 @@ public:
     SCHEMA(int, m_iShotsFired, "C_CSPlayerPawn->m_iShotsFired");
 
     SCHEMA(float, m_flEmitSoundTime, "C_CSPlayerPawn->m_flEmitSoundTime");
+    SCHEMA(float, m_flDetectedByEnemySensorTime, "C_CSPlayerPawn->m_flDetectedByEnemySensorTime");
 
     SCHEMA(EntitySpottedState_t, m_entitySpottedState, "C_CSPlayerPawn->m_entitySpottedState");
 
     SCHEMA(CUtlVectorSimple, m_aimPunchCache, "C_CSPlayerPawn->m_aimPunchCache");
+    
+    SCHEMA(QAngle, m_angEyeAngles, "C_CSPlayerPawn->m_angEyeAngles");
+    
+    // Bone reading offsets - these need to be verified from offsets dump
+    // dwBoneMatrix: offset to pointer to array of Matrix3x4_t (128 bones)
+    // m_pStudioHdr: offset to studiohdr_t pointer
+    static constexpr std::uintptr_t dwBoneMatrix = 0x268; // Example offset, needs verification
+    static constexpr std::uintptr_t m_pStudioHdr = 0x1080; // Example offset, needs verification
 };
 
 class C_CSObserverPawn : public C_CSPlayerPawnBase
@@ -406,4 +463,17 @@ public:
 
     SCHEMA(CHandle<C_CSPlayerPawn>, m_hPlayerPawn, "CCSPlayerController->m_hPlayerPawn");
     SCHEMA(CHandle<C_CSObserverPawn>, m_hObserverPawn, "CCSPlayerController->m_hObserverPawn");
+};
+
+class C_PlantedC4 : public C_BaseEntity
+{
+public:
+    SCHEMA(bool, m_bBombTicking, "C_PlantedC4->m_bBombTicking");
+    SCHEMA(int, m_nBombSite, "C_PlantedC4->m_nBombSite");
+    SCHEMA(float, m_flC4Blow, "C_PlantedC4->m_flC4Blow");
+    SCHEMA(bool, m_bCannotBeDefused, "C_PlantedC4->m_bCannotBeDefused");
+    SCHEMA(bool, m_bHasExploded, "C_PlantedC4->m_bHasExploded");
+    SCHEMA(float, m_flTimerLength, "C_PlantedC4->m_flTimerLength");
+    SCHEMA(bool, m_bBeingDefused, "C_PlantedC4->m_bBeingDefused");
+    SCHEMA(bool, m_bBombDefused, "C_PlantedC4->m_bBombDefused");
 };

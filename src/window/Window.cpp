@@ -1,5 +1,8 @@
 #include "../Includes.h"
 
+// Forward declaration
+void RenderWidgets();
+
 // ============================================================================
 // UI ACCESS TOKEN FUNCTIONS
 // ============================================================================
@@ -279,6 +282,9 @@ bool Window::Render()
 
         ImDrawList* pBackgroundDrawList = ImGui::GetBackgroundDrawList();
         Draw::RenderDrawData(pBackgroundDrawList);
+        
+        // Render draggable widgets (before ImGui::Render so they're always visible)
+        RenderWidgets();
 
         ImGui::Render();
 

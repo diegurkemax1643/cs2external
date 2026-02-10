@@ -24,13 +24,24 @@ void CUtilities::Sleep(float flMilliseconds)
 bool CUtilities::IsVisible(C_CSPlayerPawn* pPlayer, Vector vecStart, Vector vecPosition)
 {
 	if (!pPlayer || vecPosition.IsZero())
+	{
+		Logger::Log("[IsVisible] Invalid parameters: pPlayer=" + std::to_string(reinterpret_cast<uintptr_t>(pPlayer)) + ", vecPosition.IsZero()=" + std::to_string(vecPosition.IsZero()));
 		return false;
+	}
 
-	const bool bSpotted = pPlayer->m_entitySpottedState().m_bSpottedByMask[0] & (1 << reinterpret_cast<std::uintptr_t>(g_Globals.m_LocalPlayer.m_pPlayerPawn));
+	// Fix: Use EntryIndex for bitmask, not pointer
+	int localIndex = g_Globals.m_LocalPlayer.m_pPlayerPawn ? g_Globals.m_LocalPlayer.m_pPlayerPawn->GetRefEHandle().GetEntryIndex() : 0;
+	const bool bSpotted = pPlayer->m_entitySpottedState().m_bSpottedByMask[0] & (1 << localIndex);
+	
 	if (!g_MapParser.m_bSetup)
+	{
+		Logger::Log("[IsVisible] MapParser not setup, using spotted check: bSpotted=" + std::to_string(bSpotted) + ", localIndex=" + std::to_string(localIndex));
 		return bSpotted;
+	}
 
-	return g_MapParser.IsVisible(vecStart, vecPosition);
+	bool bMapVisible = g_MapParser.IsVisible(vecStart, vecPosition);
+	Logger::Log("[IsVisible] MapParser setup, using map check: bMapVisible=" + std::to_string(bMapVisible));
+	return bMapVisible;
 }
 
 bool CUtilities::IsChangingLevel()

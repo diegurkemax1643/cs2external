@@ -90,6 +90,28 @@ public:
 		return false;
 	}
 
+	// Helper function to validate memory pointers (prevents crashes from bad memory access)
+	// Based on the cs2_glow repository implementation
+	// Adapted for external memory reading (uses ReadMemoryRaw instead of VirtualQuery)
+	bool IsValidPtr(void* ptr)
+	{
+		if (!ptr)
+			return false;
+		
+		// For external processes, validate by attempting to read a small amount of memory
+		// This is safer than VirtualQuery which only works for the current process
+		std::uintptr_t uAddress = reinterpret_cast<std::uintptr_t>(ptr);
+		
+		// Basic address range check (valid user-mode addresses)
+		if (uAddress < 0x10000 || uAddress > 0x7FFFFFFFFFFF)
+			return false;
+		
+		// Try to read 1 byte to verify the memory is accessible
+		// This is similar to the repo's VirtualQuery check but works for external processes
+		std::uint8_t testByte = 0;
+		return ReadMemoryRaw(uAddress, &testByte, sizeof(testByte));
+	}
+
 	void Initialize(const char* szProcessName)
 	{
 		while (!m_pProcessID)

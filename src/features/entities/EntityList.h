@@ -4,6 +4,10 @@ enum EEntityType : unsigned int
 {
 	ENTITY_INVALID = 0,
 	ENTITY_PLAYER,
+	ENTITY_CHICKEN,
+	ENTITY_BOMB,
+	ENTITY_DROPPED_BOMB,
+	ENTITY_GRENADE,
 };
 
 struct EntityObject_t

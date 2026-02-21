@@ -44,7 +44,5 @@ Compile as Release or Debug. Either configuration will provide you with a compil
 - [JSON](https://github.com/nlohmann/json)
 - [STB](https://github.com/nothings/stb/tree/master)
 
-# Contacts
-- Discord: Exlodium
-- Snapchat: Exlodium
+
 

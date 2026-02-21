@@ -1,10 +1,3 @@
-# CS2-External-Base
-A simple free to use CS2 external cheat base
-
-# About
-This is my first public project, I've decided to rewwork my old external base as a learning example for other people interested in making CS2 cheats. \
-From my limited play testing the cheat does not seem to get you banned, however I can not garuantee safety ( use at your own risk ). \
-I've based this cheat on the principle of **READ ONLY** in an attempt to stay clear of bans
 
 # How to use
 Compile as Release or Debug. Either configuration will provide you with a compiled .exe file.
@@ -54,3 +47,4 @@ Compile as Release or Debug. Either configuration will provide you with a compil
 # Contacts
 - Discord: Exlodium
 - Snapchat: Exlodium
+
